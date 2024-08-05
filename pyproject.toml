@@ -108,7 +108,7 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [project.entry-points.'nomad.plugin']
-myparser = "nomad_workflow_parser.parsers:myparser"
+myparser = "nomad_workflow_parser.parsers:ams_workflow_parser"
 mypackage = "nomad_workflow_parser.schema_packages:mypackage"
 mynormalizer = "nomad_workflow_parser.normalizers:mynormalizer"
 
