@@ -16,6 +16,13 @@ from nomad.parsing.parser import MatchingParser
 
 from amstools.pipeline import Pipeline
 
+from nomad.datamodel.metainfo.workflow import Workflow, Task, Link
+from nomad.metainfo import SubSection, Section
+from nomad.datamodel.datamodel import EntryArchive
+from ruamel.yaml import YAML, dump
+
+import os
+
 configuration = config.get_plugin_entry_point(
     'nomad_workflow_parser.parsers:ams_workflow_parser'
 )
@@ -36,3 +43,77 @@ class AMSWorkflowParser(MatchingParser):
         
         #        logger.info('AMSWorkflowParser.parse', parameter=configuration.parameter)
 #         archive.results = Results(material=Material(elements=['H', 'O']))
+
+    def parse_single_point_calculation(
+            self,
+            input_archive: EntryArchive,
+            logger: 'BoundLogger',
+            ):
+
+
+        section_root = os.path.join( '..','upload', 'archive', 'mainfile', os.path.basename(  input_archive[0].metadata.mainfile ))
+
+        workflow_dict  ={'workflow2':
+                         {
+                             'name': 'SinglePointCalc',
+                             'inputs':[{'name':  'Input Structure' , 'section': section_root+'#run/0/system/-1' }],
+                             'outputs':[{'name' : 'Output Calculation','section': section_root+'#run/0/calculation/-1'}],
+                             'tasks': [{
+                                 'm_def' : 'nomad.datamodel.metainfo.workflow.TaskReference',
+                                 'task' :section_root+'#workflow2',
+                                 'name' : 'Structure optimization',
+                                 'inputs': [ {'name' : 'Input Structure','section' : section_root+ '#run/0/system/-1' }],
+                                 'outputs': [{ 'name' : 'Output Calculation','section' : section_root+'#run/0/calculation/-1'}]
+                                 }]
+                             }
+                         }
+
+
+        yaml = YAML()
+        yaml.preserve_quotes = True
+        yaml.explicit_start = True
+        output_dir = os.path.dirname ( input_archive[0].metadata.mainfile )
+        output_yaml = os.path.join(output_dir, 'test_single_point_workflow.archive.yaml')
+        with open(output_yaml, 'w') as f:
+            yaml.dump(workflow_dict, stream=f)
+        return workflow_dict
+
+    def create_workflow_from_scratch(
+            self,
+            input_archive: EntryArchive,
+            logger: 'BoundLogger'
+            ):
+
+        workflow_object = Workflow()
+
+
+        workflow_object.m_add_sub_section(
+                Workflow.inputs,
+                Link(name='Input Structure', section=input_archive.run[-1].system[-1])
+                )
+
+        workflow_object.m_add_sub_section(
+                Workflow.outputs,
+                Link(name='Calculation Output', section=input_archive.run[-1].calculation[-1])
+                )
+
+
+        data_root = os.path.dirname(input_archive.metadata.mainfile)
+        data_file = os.path.join(data_root, 'scratch_workflow.archive.yaml')
+
+        workflow_dict = workflow_object.m_to_dict()
+
+        yaml = YAML()
+        yaml.preserve_quotes = True
+        with open(data_file, 'w') as f:
+            yaml.dump(workflow_dict, f)
+
+        return data_file
+
+
+
+
+
+
+
+
