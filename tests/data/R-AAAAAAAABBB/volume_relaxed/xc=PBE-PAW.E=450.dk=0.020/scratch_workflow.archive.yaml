@@ -1,0 +1,7 @@
+workflow2:
+  inputs:
+  - name: Input Structure
+    section: /run/0/system/0
+  outputs:
+  - name: Calculation Output
+    section: /run/0/calculation/0
