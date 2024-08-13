@@ -89,27 +89,46 @@ class AMSWorkflowParser(MatchingParser):
 
         root_url = os.path.join('../upload/archive/mainfile', os.path.basename(input_archive.metadata.mainfile))
 
+
+        #workflow_object = Workflow()
+        
+        
+        #workflow_object.m_add_sub_section(
+        #        Workflow.inputs,
+        #        Link(name='Input Structure', section=input_archive.run[-1].system[-1], m_context=root_url)
+        #        #                Link(name='Input Structure', section=input_archive.run[-1].system[-1])
+        #        )
+
+        #workflow_object.m_add_sub_section(
+        #        Workflow.outputs,
+        #        Link(name='Calculation Output', section=input_archive.run[-1].calculation[-1], m_context=root_url)
+        #        )
+
+        #workflow_object.m_add_sub_section(
+        #        Task.m_def,
+        #        Link(name = 'Energy calculation', section = input_archive.workflow2.tasks)
+        #        )
+
+
+        workflow_dict = {
+                'name' : 'Single Point Calculation',
+                'inputs': [ {'name': 'Input Structure', 'section': root_url+'#run/0/system/-1'}],
+                'outputs': [ {'name': 'Relaxed Structure', 'section': root_url+'#run/0/calculation/-1'}],
+                'tasks':[
+                    {'m_def': 'nomad.datamodel.metainfo.workflow.TaskReference', 'task': root_url+'#workflow2', 
+                     'name': 'Internal degrees of freedom', 
+                     'inputs':[{'name': 'Input Structure', 'section': root_url+'#run/0/system/-1'}],
+                     'outputs':[{'name': 'Relaxed Structure', 'section': root_url+'#run/0/calculation/-1'} ],
+                     }
+                    ]
+                }
+
+        workflow_object = Workflow.m_from_dict(workflow_dict)
         workflow_archive = EntryArchive()
-
-        workflow_object = Workflow()
-        
-        
-        workflow_object.m_add_sub_section(
-                Workflow.inputs,
-                Link(name='Input Structure', section=input_archive.run[-1].system[-1], m_context=root_url)
-                #                Link(name='Input Structure', section=input_archive.run[-1].system[-1])
-                )
-
-        workflow_object.m_add_sub_section(
-                Workflow.outputs,
-                Link(name='Calculation Output', section=input_archive.run[-1].calculation[-1], m_context=root_url)
-                )
-
         workflow_archive.m_add_sub_section(
                 EntryArchive.workflow2, 
                 workflow_object
                 )
-
         archive_dict = workflow_archive.m_to_dict()
 
         yaml = YAML()
